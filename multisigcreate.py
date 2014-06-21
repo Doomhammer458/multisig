@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-from bitcoin import *
+
 import dogecoinrpc as doge
 doge = doge.connect_to_local()
-import random
-import re
+
 import sqlalchemy as sql
 import uuid
 from sqlalchemy.ext.declarative import declarative_base
@@ -61,13 +60,3 @@ session.add(db_add)
 session.commit()
 session.close()
 print multiadd
-
-"""
-
-
-prev = {'txid': "26b108226eab9bb9a98274eb7f8de784b7490d1cb6eb1b2e06c5a7494067837d",
-'vout': 0, "scriptPubKey": "a914be126e4e1a93b35787236eb979116da63e3fa29187", 'redeemScript': redeemscript}
-
-in_list=[{"txid":"26b108226eab9bb9a98274eb7f8de784b7490d1cb6eb1b2e06c5a7494067837d","vout":0}]
-out_dict = {"DFhGfJxZ2xzJc78ih4JaoKh8wYounJvvNs":1}
-"""
