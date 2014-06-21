@@ -22,7 +22,13 @@ class multisig(Base):
     redeemscript = Column(String)
     status = Column(String)
     
-    
+class user(Base):
+    __tablename__ = "user"
+    user = Column(String, primary_key = True)
+    address = Column(String)
+    registered = Column(Boolean)
+    banned = Column(Boolean(False))
+    txs = Column(String)
     
 
 
