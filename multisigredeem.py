@@ -2,7 +2,7 @@ import dogecoinrpc as doge
 doge = doge.connect_to_local()
 
 import sqlalchemy as sql
-
+import sys
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Float, Boolean
 from sqlalchemy.orm import sessionmaker
@@ -32,6 +32,9 @@ filter(multisig.status == None).first()
 url = "https://dogechain.info/api/v1/unspent/"+instance.multiaddress
 resp = requests.get(url).json()
 unspent = resp["unspent_outputs"]
+if unspent ==[]:
+    print "no unspent transactions"
+    sys.exit()
 
 tx_id = unspent[0]["tx_hash"]
 txn = unspent[0]["tx_output_n"]
@@ -43,14 +46,15 @@ out_dict = {"DFhGfJxZ2xzJc78ih4JaoKh8wYounJvvNs":value}
 prev = [{'txid': tx_id,
 'vout': txn, "scriptPubKey": scriptpubkey, 'redeemScript': instance.redeemscript}]
 raw = doge.createrawtransaction(in_list,out_dict)
+
 sign1 = doge.signrawtransaction(raw,prev,[instance.privkey1,instance.privkey3])
 tx = doge.sendrawtransaction(sign1["hex"])
 print tx
 instance.status="complete"
+
 session.add(instance)
 session.commit()
 session.close()
-
 
 
 
