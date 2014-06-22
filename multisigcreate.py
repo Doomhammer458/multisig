@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import multisigtables
+
 
 def generate_mutltisig_address():
     from multisigtables import multisig

@@ -3,8 +3,11 @@
 
 import sqlalchemy as sql
 
-from sqlalchemy.ext.declarative import declarative_base
+
 from sqlalchemy import Column, String,Float, Boolean
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
 
 Base = declarative_base()
 class multisig(Base):
@@ -26,6 +29,7 @@ class user_info(Base):
     registered = Column(Boolean)
     banned = Column(Boolean(False))
     txs = Column(String)
+    
 class escrow_address(Base):
     __tablename__ = "escrow"
     multi_address = Column(String,primary_key = True)
@@ -43,10 +47,21 @@ class escrow_address(Base):
     arbitrator_private_key=Column(String)
     date_created = Column(String)
     redeem_script = Column(String)
-    status = Column(String) #"new" , "waiting on funds" , "funded" , "complete","failed","timeout"
+    status = Column(String) #"new" , "waiting on register" "waiting on funds" , "funded" , "complete","failed","timeout"
     
 if __name__ == "__main__":
-    from sqlalchemy.ext.declarative import declarative_base
-    Base = declarative_base()
+
+
+    
     engine = sql.create_engine("sqlite:///multisig.db")
     Base.metadata.create_all(engine) 
+
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    session.commit()
+    session.add(multisig(multiaddress="*"))
+    session.add(user_info(user = "*"))
+    session.add(escrow_address(multi_address = "*"))
+    session.commit()
+    session.close()
+    

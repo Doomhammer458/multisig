@@ -15,12 +15,15 @@ class Multisig_escrow():
         self.Register_message = "You are now registered with the address: %s and can \
 start using doge mulitsig escrow! \n \n For info on getting started please visit /r/DogeMultisigEscrow"
 
-        self.Register_error = " please provide a valid doge address \n\n \
+        self.Register_error = " Please provide a valid doge address \n\n \
 use this link to try again: [register]\
 (http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=register&message=%2Bregister%20ADDRESS)"
 
-
-
+        self.escrow_start = "you have successfully started an escrow transaction \
+        you will be notified when the buyer and arbitrator have agreed to the transaction"
+        self.escrow_start_fail = "Unable to complete the request please make sure you have spelled \
+the user names correctly and have included /u/ before the names\n \n Use this link to try again: [+escrow]\
+(http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=escrow&message=%2Bescrow%20buyer%20%2Fu%2Fusername%20Arbitrator%20%2Fu%2Fusername)" 
     
     def create_session(self):
         import sqlalchemy as sql
@@ -54,14 +57,27 @@ use this link to try again: [register]\
         
         return address
     def New_escrow(self,seller,buyer,arbitrator):
-
-        """
-        engine = sql.create_engine("sqlite:///multisig.db")
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        multiadd = generate_multi_sig_address()
-        session.query(multisig)
-        """
+        from multisigcreate import generate_mutltisig_address
+        from multisigtables import multisig,escrow_address
+        session = self.create_session()
+        
+        multiadd = generate_mutltisig_address()["address"]
+        print multiadd
+        multi_instance = session.query(multisig).\
+        filter(multisig.multiaddress==multiadd).first()
+        
+        redeemscript = multi_instance.redeemscript
+        adddb = escrow_address(multi_address = multiadd, seller=seller, 
+        buyer = buyer, arbitrator = arbitrator, redeem_script = redeemscript, 
+        seller_private_key = multi_instance.privkey1, buyer_private_key = multi_instance.privkey2,
+        arbitrator_private_key = multi_instance.privkey3, status = "new")
+        session.close()
+        session = self.create_session()
+        session.add(adddb)
+        session.commit()
+        session.close()
+        return [multiadd,redeemscript]
+        
     
 
 bot = Multisig_escrow()
@@ -77,6 +93,27 @@ while True:
             else:
                 mess.reply(bot.Register_message % (add))
             mess.mark_as_read()
+        elif "+escrow" in mess.body:
+            split = mess.body.split("/u/")
+            buyer = split[1].split(" ")[0]
+            arbitrator = split[2]
+            seller = mess.author.name
+            try:
+                bot.r.get_redditor(buyer)
+                bot.r.get_redditor(arbitrator)
+            except:
+                mess.reply(bot.escrow_start_fail)
+                mess.mark_as_read()
+                continue
+                
+            bot.New_escrow(seller,buyer,arbitrator)
+            
+            mess.reply(bot.escrow_start)
+            mess.mark_as_read()
+        
+            
+
+            
 
     time.sleep(1)
     time.sleep(10)
