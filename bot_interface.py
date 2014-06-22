@@ -8,28 +8,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Float, Boolean
 from sqlalchemy.orm import sessionmaker
 import requests
-Base = declarative_base()
-class multisig(Base):
-    __tablename__ = "multisig"
-    address1 = Column(String)
-    address2 = Column(String)
-    address3 = Column(String)
-    privkey1 = Column(String)
-    privkey2 = Column(String)
-    privkey3 = Column(String)
-    multiaddress = Column(String, primary_key=True)
-    redeemscript = Column(String)
-    status = Column(String)
+
+from multisigtables import *
     
-class user_info(Base):
-    __tablename__ = "user_info"
-    user = Column(String, primary_key = True)
-    address = Column(String)
-    registered = Column(Boolean)
-    banned = Column(Boolean(False))
-    txs = Column(String)
-  
-Register_message = "Hi!  \n \n You are now registered with the address: %s and can \
+Register_message = "You are now registered with the address: %s and can \
 start using doge mulitsig escrow! \n \n For info on getting started please visit /r/DogeMultisigEscrow"
 
     
@@ -54,6 +36,7 @@ def Register_new_user(User,message):
     session.close()
     
     return address
+    
 r.login()
     
 while True:
@@ -62,7 +45,7 @@ while True:
     for mess in inbox:
         if "+register" in mess.body :
             add = Register_new_user(mess.author.name,  mess.body)
-            mess.reply(Register_message % (add))
+            print mess.reply(Register_message % (add))
             mess.mark_as_read()
 
     time.sleep(1)

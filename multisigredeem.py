@@ -1,40 +1,21 @@
-import dogecoinrpc as doge
-doge = doge.connect_to_local()
+import dogecoinrpc 
+doge = dogecoinrpc.connect_to_local()
 
 import sqlalchemy as sql
 import sys
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Float, Boolean
+
 from sqlalchemy.orm import sessionmaker
 import requests
 Base = declarative_base()
-class multisig(Base):
-    __tablename__ = "multisig"
-    address1 = Column(String)
-    address2 = Column(String)
-    address3 = Column(String)
-    privkey1 = Column(String)
-    privkey2 = Column(String)
-    privkey3 = Column(String)
-    multiaddress = Column(String)
-    ID = Column(String, primary_key=True)
-    redeemscript = Column(String)
-    status = Column(String)
-    
-    
-class user(Base):
-    __tablename__ = "user"
-    user = Column(String, primary_key = True)
-    address = Column(String)
-    registered = Column(Boolean)
-    banned = Column(Boolean(False))
-    txs = Column(String)
-
+from multisigtables import *
+doge = dogecoinrpc.connect_to_local()
 engine = sql.create_engine("sqlite:///multisig.db")
 Session = sessionmaker(bind=engine)
 session = Session()
 instance= session.query(multisig).\
 filter(multisig.status == None).first()
+print instance.multiaddress
 if instance == None:
     print "no pending addresses"
     sys.exit()
