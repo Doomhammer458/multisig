@@ -44,3 +44,9 @@ class escrow_address(Base):
     date_created = Column(String)
     redeem_script = Column(String)
     status = Column(String) #"new" , "waiting on funds" , "funded" , "complete","failed","timeout"
+    
+if __name__ == "__main__":
+    from sqlalchemy.ext.declarative import declarative_base
+    Base = declarative_base()
+    engine = sql.create_engine("sqlite:///multisig.db")
+    Base.metadata.create_all(engine) 

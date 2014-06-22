@@ -5,14 +5,14 @@ import multisigtables
 def generate_mutltisig_address():
     from multisigtables import multisig
     import sqlalchemy as sql
-    from sqlalchemy.ext.declarative import declarative_base
+    
 
     from sqlalchemy.orm import sessionmaker
-    Base = declarative_base()
+    
     import dogecoinrpc
     doge = dogecoinrpc.connect_to_local()
     engine = sql.create_engine("sqlite:///multisig.db")
-    Base.metadata.create_all(engine)
+    
     
     Session = sessionmaker(bind=engine)
     session = Session()
