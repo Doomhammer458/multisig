@@ -29,6 +29,7 @@ class user_info(Base):
     registered = Column(Boolean)
     banned = Column(Boolean(False))
     txs = Column(String)
+    auto_accept_arb = Boolean(False)
     
 class escrow_address(Base):
     __tablename__ = "escrow"
@@ -38,7 +39,7 @@ class escrow_address(Base):
     arbitrator = Column(String)
     seller_registered = Column(Boolean)
     buyer_registered = Column(Boolean)
-    Arbitrator_accept = Column(Boolean)
+    arbitrator_accept = Column(Boolean)
     seller_vote = Column(String)
     buyer_vote = Column(String)
     arbitrator_vote = Column(String)
@@ -48,6 +49,8 @@ class escrow_address(Base):
     date_created = Column(String)
     redeem_script = Column(String)
     status = Column(String) #"new" , "waiting on register" "waiting on funds" , "funded" , "complete","failed","timeout"
+    def __repr__(self):
+        return "add: %s status: %s" % (self.multi_address, self.status)
     
 if __name__ == "__main__":
 
