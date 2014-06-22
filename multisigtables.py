@@ -48,6 +48,7 @@ class escrow_address(Base):
     arbitrator_private_key=Column(String)
     date_created = Column(String)
     redeem_script = Column(String)
+    tx_id = Column(String)
     status = Column(String) #"new" , "waiting on register" "waiting on funds" , "funded" , "complete","failed","timeout"
     def __repr__(self):
         return "add: %s status: %s" % (self.multi_address, self.status)
