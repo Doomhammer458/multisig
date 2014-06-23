@@ -35,6 +35,11 @@ the user names correctly and have included /u/ before the names\n \n Use this li
 arbitrator requests please follow the following link: \n \n [+autoarb](\
 http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&message=%2Bautoarb)  \
 (you will still need to accept this request manually)"
+        self.fund_info = "Your escrow transaction is ready!  Here is all the vitial info, if any of it is \
+incorrect **DO NOT** proceed with the transaction. \n \n Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \
+\n\n Multi signature address: %s \n \n  If all the information is correct, send your payment to the address listed above.\
+You will be notified when the payment has been recieved. Below is your personal private key and the address reedeem script \
+in the event you need to author your own transaction. Do not share this information. \n\n Private key %s  Redeem script  %s " 
 
 
     def create_session(self):
@@ -189,7 +194,16 @@ while True:
         elif instance.status =="waiting on register":
             if instance.seller_registered == True and instance.buyer_registered == True\
             and instance.arbitrator_accept == True:
-                
+                users = bot.get_users(instance.multi_address)
+                bot.r.send_message(users[0],"Escrow Address",bot.fund_info %\
+                (users[0],users[1],users[2],instance.multi_address, instance.seller_private_key,\
+                instance.redeem_script))
+                bot.r.send_message(users[1],"Escrow Address",bot.fund_info %\
+                (users[0],users[1],users[2],instance.multi_address, instance.buyer_private_key,\
+                instance.redeem_script))
+                bot.r.send_message(users[2],"Escrow Address",bot.fund_info %\
+                (users[0],users[1],users[2],instance.multi_address, instance.arbitrator_private_key,\
+                instance.redeem_script))
                 instance.status = "waiting on funds"
         
         
