@@ -49,12 +49,12 @@ class escrow_address(Base):
     date_created = Column(String)
     redeem_script = Column(String)
     tx_id = Column(String)
+    complete = Column(Boolean(False))
     status = Column(String) #"new" , "waiting on register" "waiting on funds" , "funded" , "complete","failed","timeout"
     def __repr__(self):
         return "add: %s status: %s" % (self.multi_address, self.status)
     
 if __name__ == "__main__":
-
 
     
     engine = sql.create_engine("sqlite:///multisig.db")
