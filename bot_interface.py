@@ -1,6 +1,7 @@
 
 
 import time 
+import requests
 from multisigtables import multisig,escrow_address,user_info
 class Multisig_escrow():
     
@@ -205,6 +206,12 @@ while True:
                 (users[0],users[1],users[2],instance.multi_address, instance.arbitrator_private_key,\
                 instance.redeem_script))
                 instance.status = "waiting on funds"
+        elif instance.status == "waiting on funds":
+                url = "https://dogechain.info/api/v1/unspent/"+instance.multi_address
+                resp = requests.get(url).json()
+                unspent = resp["unspent_outputs"]
+                if unspent != []:
+                    instance.status = "funded"
         
         
         
