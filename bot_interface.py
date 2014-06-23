@@ -3,6 +3,7 @@
 import time 
 import requests
 from multisigtables import multisig,escrow_address,user_info
+
 class Multisig_escrow():
     
 
@@ -122,11 +123,21 @@ in the event you need to author your own transaction. Do not share this informat
                 return False
         else:
             return False  
+def get_value(unspent):
+    v=0.0
+    for i in unspent:
+        if int(i["confirmations"])<3:
+            return 0
+        v+=float(i["value"])*10**-8
+    return v
+    
 
 bot = Multisig_escrow()
 bot.r.login()
 while True:
+    
     print "...."
+    #inbox checker
     inbox = bot.r.get_unread()
     escrow_session = bot.create_session()
     for mess in inbox:
@@ -169,7 +180,7 @@ while True:
             escrow_session.add(autoarb_add)
             mess.mark_as_read()
 
-    
+    #database checker
     for instance in escrow_session.query(escrow_address).filter(escrow_address.complete == False).all():
         print instance
         #new status
@@ -211,7 +222,11 @@ while True:
                 resp = requests.get(url).json()
                 unspent = resp["unspent_outputs"]
                 if unspent != []:
-                    instance.status = "funded"
+                    coins = get_value(unspent)
+                    if coins == 0:
+                        pass
+                    else:
+                        instance.status = "funded"
         
         
         
