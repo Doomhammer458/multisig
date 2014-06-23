@@ -31,6 +31,12 @@ the user names correctly and have included /u/ before the names\n \n Use this li
         self.arbitrator_ask1 = '%s has asked you to arbitrate a transaction with %s, to accept click on the following link: \n \n '
         self.arbitrator_ask2="[+acceptarb]\
 (http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=escrow&message=\%2Bacceptarb\%20"
+        self.arbitrator_auto_accept_link = "\n\n if you would like to automatically accept future \
+arbitrator requests please follow the following link: \n \n [+autoarb](\
+http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&message=%2Bautoarb)  \
+(you will still need to accept this request manually"
+
+
     def create_session(self):
         import sqlalchemy as sql
         from sqlalchemy.orm import sessionmaker
@@ -147,10 +153,14 @@ while True:
             split = mess.body.split("+acceptarb ")
             arbadd=escrow_session.query(escrow_address).\
             filter(escrow_address.multi_address == split[1]).first()
-            arbadd.arbitrator_accept = True
+            
             escrow_session.add(arbadd)
             mess.mark_as_read()
-            
+        elif "+autoarb" in mess.body:
+            autoarb_add = escrow_session.query(user_info).\
+            filter(user_info.user==mess.author.name.lower()).first()
+            autoarb_add.auto_accept_arb = True
+            escrow_session.add(autoarb_add)
 
     
     for instance in escrow_session.query(escrow_address).filter(escrow_address.status != "complete").all():
@@ -170,7 +180,8 @@ while True:
             if bot.auto_accept(users[2]) == True:
                 instance.arbitrator_accept = True
             else:
-                bot.r.send_message(users[0],"new escrow" ,bot.arbitrator_ask1 % (users[0],users[1])+bot.arbitrator_ask2+instance.multi_address+")")
+                bot.r.send_message(users[0],"new escrow" ,bot.arbitrator_ask1 % (users[0],users[1])+bot.arbitrator_ask2+\
+                instance.multi_address+")"+bot.arbitrator_auto_accept_link)
             
 
             instance.status = "waiting on register"
