@@ -51,8 +51,17 @@ in the event you need to author your own transaction. Do not share this informat
         Session = sessionmaker(bind=engine)
         session =Session()
         return session
+    def add_user(self,User):
+        session = self.create_session()
+        dbadd= session.query(user_info).filter(user_info.user==User).first()
+        if dbadd == None:
+            dbadd = user_info(user = User.lower(), registered = False)
+            session.add(dbadd)
+        session.commit()
+        session.close()
         
     def Register_user(self, User,message):
+
 
         
         split = message.split("+register ")
@@ -68,6 +77,7 @@ in the event you need to author your own transaction. Do not share this informat
             dbadd = user_info(user = User.lower(), address = address, registered = True)
         else:
             dbadd.address = address
+            dbadd.registered = True
     
         session.add(dbadd)
         session.commit()
@@ -122,14 +132,15 @@ in the event you need to author your own transaction. Do not share this informat
             else:
                 return False
         else:
+            self.add_user(user)
             return False  
-def get_value(unspent):
-    v=0.0
-    for i in unspent:
-        if int(i["confirmations"])<3:
-            return 0
-        v+=float(i["value"])*10**-8
-    return v
+    def get_value(self,unspent):
+        v=0.0
+        for i in unspent:
+            if int(i["confirmations"])<3:
+                return 0
+            v+=float(i["value"])*10**-8
+        return v
     
 
 bot = Multisig_escrow()
@@ -217,16 +228,20 @@ while True:
                 (users[0],users[1],users[2],instance.multi_address, instance.arbitrator_private_key,\
                 instance.redeem_script))
                 instance.status = "waiting on funds"
+        #waiting on funds status
         elif instance.status == "waiting on funds":
                 url = "https://dogechain.info/api/v1/unspent/"+instance.multi_address
                 resp = requests.get(url).json()
                 unspent = resp["unspent_outputs"]
                 if unspent != []:
-                    coins = get_value(unspent)
+                    coins = bot.get_value(unspent)
                     if coins == 0:
                         pass
                     else:
                         instance.status = "funded"
+        #funded status
+        elif instance.status == "funded":
+            pass
         
         
         
