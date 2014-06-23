@@ -34,7 +34,7 @@ the user names correctly and have included /u/ before the names\n \n Use this li
         self.arbitrator_auto_accept_link = "\n\n if you would like to automatically accept future \
 arbitrator requests please follow the following link: \n \n [+autoarb](\
 http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&message=%2Bautoarb)  \
-(you will still need to accept this request manually"
+(you will still need to accept this request manually)"
 
 
     def create_session(self):
@@ -80,7 +80,7 @@ http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&mess
         adddb = escrow_address(multi_address = multiadd, seller=seller.lower(), 
         buyer = buyer.lower(), arbitrator = arbitrator.lower(), redeem_script = redeemscript, 
         seller_private_key = multi_instance.privkey1, buyer_private_key = multi_instance.privkey2,
-        arbitrator_private_key = multi_instance.privkey3, status = "new")
+        arbitrator_private_key = multi_instance.privkey3, status = "new", complete=False)
         session.close()
         session = self.create_session()
         session.add(adddb)
@@ -107,7 +107,7 @@ http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&mess
     def auto_accept(self,user): 
         session=self.create_session()
         search = session.query(user_info).\
-        filter(user_info.user == user).first()
+        filter(user_info.user == user.lower()).first()
         session.close()
         if search != None:
             if search.auto_accept_arb==True:
@@ -153,7 +153,7 @@ while True:
             split = mess.body.split("+acceptarb ")
             arbadd=escrow_session.query(escrow_address).\
             filter(escrow_address.multi_address == split[1]).first()
-            
+            arbadd.arbitrator_accept = True
             escrow_session.add(arbadd)
             mess.mark_as_read()
         elif "+autoarb" in mess.body:
@@ -161,9 +161,10 @@ while True:
             filter(user_info.user==mess.author.name.lower()).first()
             autoarb_add.auto_accept_arb = True
             escrow_session.add(autoarb_add)
+            mess.mark_as_read()
 
     
-    for instance in escrow_session.query(escrow_address).filter(escrow_address.status != "complete").all():
+    for instance in escrow_session.query(escrow_address).filter(escrow_address.complete == False).all():
         print instance
         #new status
         if instance.status == "new":
@@ -188,6 +189,7 @@ while True:
         elif instance.status =="waiting on register":
             if instance.seller_registered == True and instance.buyer_registered == True\
             and instance.arbitrator_accept == True:
+                
                 instance.status = "waiting on funds"
         
         

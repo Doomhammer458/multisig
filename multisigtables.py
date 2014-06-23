@@ -27,10 +27,11 @@ class user_info(Base):
     user = Column(String, primary_key = True)
     address = Column(String)
     registered = Column(Boolean)
-    banned = Column(Boolean(False))
+    banned = Column(Boolean)
     txs = Column(String)
-    auto_accept_arb = Boolean(False)
-    
+    auto_accept_arb = Column(Boolean)
+    def __repr__(self):
+        return "<user_info for %s>" % (self.user)
 class escrow_address(Base):
     __tablename__ = "escrow"
     multi_address = Column(String,primary_key = True)
@@ -49,7 +50,7 @@ class escrow_address(Base):
     date_created = Column(String)
     redeem_script = Column(String)
     tx_id = Column(String)
-    complete = Column(Boolean(False))
+    complete = Column(Boolean)
     status = Column(String) #"new" , "waiting on register" "waiting on funds" , "funded" , "complete","failed","timeout"
     def __repr__(self):
         return "add: %s status: %s" % (self.multi_address, self.status)
