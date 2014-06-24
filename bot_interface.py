@@ -3,7 +3,7 @@
 import time 
 import requests
 from multisigtables import multisig,escrow_address,user_info
-
+from multisigredeem import redeem_funds
 class Multisig_escrow():
     
 
@@ -27,7 +27,7 @@ use this link to try again: [+register]\
 the user names correctly and have included /u/ before the names\n \n Use this link to try again: [+escrow]\
 (http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=escrow&message=%2Bescrow%20buyer%20%2Fu%2Fusername%20Arbitrator%20%2Fu%2Fusername)" 
         self.register_ask = "%s would like to start a escrow transaction with %s.  If you would like to proceed, follow this link to register an\
- address with doge multlisig escrow: \n \n"
+ address with doge multisig escrow: \n \n"
         self.register_url="[+register]\
 (http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=register&message=%2Bregister%20ADDRESS)"
         self.arbitrator_ask1 = '%s has asked you to arbitrate a transaction with %s, to accept click on the following link: \n \n '
@@ -40,12 +40,12 @@ http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&mess
         self.fund_info = "Your escrow transaction is ready!  Here is all the vital info, if any of it is \
 incorrect **DO NOT** proceed with the transaction. \n \n Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \
 \n\n Multi signature address: %s \n \n  If all the information is correct, send your payment to the address listed above.\
-You will be notified when the payment has been recieved. Below is your personal private key and the address reedeem script \
+You will be notified when the payment has been received. Below is your personal private key and the address redeem script \
 in the event you need to author your own transaction. Do not share this information. \n\n Your personal private key %s  Redeem script  %s " 
 
         self.funded = " A deposit of %s doge has been recieved in the following transaction: \n \n \
 Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s \n \n when the transaction is complete or has failed,\
-use the links below to send the funds to the apopriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute"
+ use the links below to send the funds to the apopriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute"
         self.funded_seller_vote = "\n \n [send funds to seller](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20SELLER%20"
         self.funded_buyer_vote = "[send funds to buyer](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20BUYER%20" 
     def create_session(self):
@@ -146,15 +146,15 @@ use the links below to send the funds to the apopriate party.  If you are the ar
         split = message.split("+vote ")
         split2 = split[1].split(" ")
         add = split2[1]
-        vote = split2[1]
-        print split2
-        role = self.find_role(user,add)
+        vote = split2[0]
+        
+        role = self.find_role(u,add)
         if role == None:
             return -1
         session = self.create_session()
         search = session.query(escrow_address).\
         filter(escrow_address.multi_address == add).first()
-        print role
+        
         if role == "seller":
             search.seller_vote=vote
         elif role =="buyer":
@@ -164,7 +164,29 @@ use the links below to send the funds to the apopriate party.  If you are the ar
         session.commit()
         session.close()
         return 1
+    def vote_address_picker(self, address):
+        session = self.create_session()
         
+        search = session.query(escrow_address).\
+        filter(escrow_address.multi_address == address).first()
+        votes = [search.seller_vote,search.buyer_vote,search.arbitrator_vote]
+        
+        if votes.count("BUYER")>=2:
+            user = session.query(user_info).\
+            filter(user_info.user == search.buyer).first()
+            print address
+            session.close()
+            return user.address
+           
+        elif votes.count("SELLER")>=2:
+            user = session.query(user_info).\
+            filter(user_info.user == search.seller).first()
+            print address
+            session.close()
+            return user.address
+        else:
+            session.close()
+            return None
         
         
         
@@ -259,12 +281,13 @@ while True:
             if bot.auto_accept(users[2]) == True:
                 instance.arbitrator_accept = True
             else:
-                bot.r.send_message(users[0],"new escrow" ,bot.arbitrator_ask1 % (users[0],users[1])+bot.arbitrator_ask2+\
+                bot.r.send_message(users[2],"new escrow" ,bot.arbitrator_ask1 % (users[0],users[1])+bot.arbitrator_ask2+\
                 instance.multi_address+")"+bot.arbitrator_auto_accept_link)
             
 
             instance.status = "waiting on register"
         elif instance.status =="waiting on register":
+            print instance.seller_registered, instance.buyer_registered, instance.arbitrator_accept
             if instance.seller_registered == True and instance.buyer_registered == True\
             and instance.arbitrator_accept == True:
                 users = bot.get_users(instance.multi_address)
@@ -278,6 +301,13 @@ while True:
                 (users[0],users[1],users[2],instance.multi_address, instance.arbitrator_private_key,\
                 instance.redeem_script))
                 instance.status = "waiting on funds"
+ 
+            reg = escrow_session.query(user_info).\
+            filter(user_info.user == instance.buyer).first()
+            if reg.registered == True:
+                instance.buyer_registered=True
+                
+                    
         #waiting on funds status
         elif instance.status == "waiting on funds":
                 url = "https://dogechain.info/api/v1/unspent/"+instance.multi_address
@@ -299,7 +329,16 @@ while True:
                     
         #funded status
         elif instance.status == "funded":
-            pass
+            to_add = bot.vote_address_picker(instance.multi_address)
+            if to_add == None:
+                pass
+            else:
+                
+                instance.tx_id = redeem_funds(instance.multi_address,to_add)
+                instance.status = "complete"
+                instance.complete = True
+                
+            
         
         
         
