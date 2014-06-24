@@ -37,7 +37,7 @@ the user names correctly and have included /u/ before the names\n \n Use this li
 arbitrator requests please follow the following link: \n \n [+autoarb](\
 http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&message=%2Bautoarb)  \
 (you will still need to accept this request manually)"
-        self.fund_info = "Your escrow transaction is ready!  Here is all the vitial info, if any of it is \
+        self.fund_info = "Your escrow transaction is ready!  Here is all the vital info, if any of it is \
 incorrect **DO NOT** proceed with the transaction. \n \n Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \
 \n\n Multi signature address: %s \n \n  If all the information is correct, send your payment to the address listed above.\
 You will be notified when the payment has been recieved. Below is your personal private key and the address reedeem script \
@@ -124,7 +124,50 @@ use the links below to send the funds to the apopriate party.  If you are the ar
         else:
             return False
         
-            
+    def find_role(self,user,address):
+        u = user.lower()
+        session = self.create_session()
+        search = session.query(escrow_address).\
+        filter(escrow_address.multi_address == address).first()
+        session.close()
+        if search == None:
+            return None
+        if search.seller == u:
+            return "seller"
+        elif search.buyer == u:
+            return "buyer"
+        elif search.arbitrator ==u:
+            return "arbitrator"
+        else:
+            return None
+        
+    def vote_parser(self, user, message):
+        u = user.lower()
+        split = message.split("+vote ")
+        split2 = split[1].split(" ")
+        add = split2[1]
+        vote = split2[1]
+        print split2
+        role = self.find_role(user,add)
+        if role == None:
+            return -1
+        session = self.create_session()
+        search = session.query(escrow_address).\
+        filter(escrow_address.multi_address == add).first()
+        print role
+        if role == "seller":
+            search.seller_vote=vote
+        elif role =="buyer":
+            search.buyer_vote=vote
+        elif role =="arbitrator":
+            search.arbitrator_vote=vote
+        session.commit()
+        session.close()
+        return 1
+        
+        
+        
+        
     def auto_accept(self,user): 
         session=self.create_session()
         search = session.query(user_info).\
@@ -193,6 +236,9 @@ while True:
             filter(user_info.user==mess.author.name.lower()).first()
             autoarb_add.auto_accept_arb = True
             escrow_session.add(autoarb_add)
+            mess.mark_as_read()
+        elif "+vote" in mess.body:
+            bot.vote_parser(mess.author.name,mess.body)
             mess.mark_as_read()
 
     #database checker
