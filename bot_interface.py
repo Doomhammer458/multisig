@@ -11,7 +11,7 @@ class Multisig_escrow():
         import dogecoinrpc
         import praw
         self.d = dogecoinrpc.connect_to_local()
-        self.r = praw.Reddit(user_agent="doge_multisig v0.1 by /u/Doomhammer458")
+        self.r = praw.Reddit(user_agent="doge_multisig v0.2 by /u/Doomhammer458")
         
         #message templates
         self.Register_message = "You are now registered with the address: %s and can \
