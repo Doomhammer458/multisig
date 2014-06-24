@@ -41,9 +41,13 @@ http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&mess
 incorrect **DO NOT** proceed with the transaction. \n \n Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \
 \n\n Multi signature address: %s \n \n  If all the information is correct, send your payment to the address listed above.\
 You will be notified when the payment has been recieved. Below is your personal private key and the address reedeem script \
-in the event you need to author your own transaction. Do not share this information. \n\n Private key %s  Redeem script  %s " 
+in the event you need to author your own transaction. Do not share this information. \n\n Your personal private key %s  Redeem script  %s " 
 
-
+        self.funded = " A deposit of %s doge has been recieved in the following transaction: \n \n \
+Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s \n \n when the transaction is complete or has failed,\
+use the links below to send the funds to the apopriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute"
+        self.funded_seller_vote = "\n \n [send funds to seller](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20SELLER%20"
+        self.funded_buyer_vote = "[send funds to buyer](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20BUYER%20" 
     def create_session(self):
         import sqlalchemy as sql
         from sqlalchemy.orm import sessionmaker
@@ -238,7 +242,15 @@ while True:
                     if coins == 0:
                         pass
                     else:
+                        users= bot.get_users(instance.multi_address)
+                        for user in users:
+                            bot.r.send_message(user,"Escrow Deposit",bot.funded %\
+                (str(coins),users[0],users[1],users[2],instance.multi_address)\
+                +bot.funded_seller_vote + instance.multi_address+") :  "\
+                +bot.funded_buyer_vote + instance.multi_address+")")
+                
                         instance.status = "funded"
+                    
         #funded status
         elif instance.status == "funded":
             pass

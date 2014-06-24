@@ -19,7 +19,7 @@ def redeem_funds(multi_address,to_address):
     session = Session()
     instance= session.query(multisig).\
     filter(multisig.multiaddress == multi_address).first()
-    print instance
+  
     url = "https://dogechain.info/api/v1/unspent/"+multi_address
     
     resp = requests.get(url).json()
@@ -55,7 +55,7 @@ def redeem_funds(multi_address,to_address):
     return tx
 
 if __name__ ==  "__main__":
-    print redeem_funds("9ysiaB2hzqZykCMH59dnSKjhDN4APR3pnZ","D8WVhodPoAfY7zKbYB8RvTjst5BLm6v3me")
+    print redeem_funds("AA8sWf7H5GYFf8KDNwsHp3qD9xNA8GbDzZ","D8WVhodPoAfY7zKbYB8RvTjst5BLm6v3me")
     pass
 
 
