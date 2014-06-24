@@ -49,7 +49,7 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s
         self.funded_seller_vote = "\n \n [send funds to seller](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20SELLER%20"
         self.funded_buyer_vote = "[send funds to buyer](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20BUYER%20" 
         self.complete = "Your transaction is complete, the funds were sent to %s \n\n\
- your TX ID is %s" 
+ your TX ID is [%s](http://dogechain.info/tx/%s)" 
     def create_session(self):
         import sqlalchemy as sql
         from sqlalchemy.orm import sessionmaker
@@ -341,7 +341,7 @@ while True:
 
                 seller,buyer = bot.get_users(instance.multi_address)[0],bot.get_users(instance.multi_address)[1]
                 for rec in [seller,buyer]:
-                    bot.r.send_message(rec,"escrow complete",bot.complete % (to_user[1],instance.tx_id))                
+                    bot.r.send_message(rec,"escrow complete",bot.complete % (to_user[1],instance.tx_id,instance.tx_id))                
                 instance.status = "complete"
                 instance.complete = True
         
