@@ -45,9 +45,11 @@ in the event you need to author your own transaction. Do not share this informat
 
         self.funded = " A deposit of %s doge has been recieved in the following transaction: \n \n \
 Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s \n \n when the transaction is complete or has failed,\
- use the links below to send the funds to the apopriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute"
+ use the links below to send the funds to the appropriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute"
         self.funded_seller_vote = "\n \n [send funds to seller](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20SELLER%20"
         self.funded_buyer_vote = "[send funds to buyer](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20BUYER%20" 
+        self.complete = "Your transaction is complete, the funds were sent to %s \n\n\
+ your TX ID is %s" 
     def create_session(self):
         import sqlalchemy as sql
         from sqlalchemy.orm import sessionmaker
@@ -176,14 +178,14 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s
             filter(user_info.user == search.buyer).first()
             print address
             session.close()
-            return user.address
+            return [user.address,user.user]
            
         elif votes.count("SELLER")>=2:
             user = session.query(user_info).\
             filter(user_info.user == search.seller).first()
             print address
             session.close()
-            return user.address
+            return [user.address,user.user]
         else:
             session.close()
             return None
@@ -304,8 +306,9 @@ while True:
  
             reg = escrow_session.query(user_info).\
             filter(user_info.user == instance.buyer).first()
-            if reg.registered == True:
-                instance.buyer_registered=True
+            if reg !=None:
+                if reg.registered == True:
+                    instance.buyer_registered=True
                 
                     
         #waiting on funds status
@@ -329,17 +332,18 @@ while True:
                     
         #funded status
         elif instance.status == "funded":
-            to_add = bot.vote_address_picker(instance.multi_address)
-            if to_add == None:
+            to_user = bot.vote_address_picker(instance.multi_address)
+            if to_user == None:
                 pass
             else:
                 
-                instance.tx_id = redeem_funds(instance.multi_address,to_add)
+                instance.tx_id = redeem_funds(instance.multi_address,to_user[0])
+
+                seller,buyer = bot.get_users(instance.multi_address)[0],bot.get_users(instance.multi_address)[1]
+                for rec in [seller,buyer]:
+                    bot.r.send_message(rec,"escrow complete",bot.complete % (to_user[1],instance.tx_id))                
                 instance.status = "complete"
                 instance.complete = True
-                
-            
-        
         
         
         
