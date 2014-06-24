@@ -288,6 +288,7 @@ while True:
             
 
             instance.status = "waiting on register"
+            
         elif instance.status =="waiting on register":
             print instance.seller_registered, instance.buyer_registered, instance.arbitrator_accept
             if instance.seller_registered == True and instance.buyer_registered == True\
@@ -310,7 +311,11 @@ while True:
                 if reg.registered == True:
                     instance.buyer_registered=True
                 
-                    
+            reg = escrow_session.query(user_info).\
+            filter(user_info.user == instance.seller).first()
+            if reg !=None:
+                if reg.registered == True:
+                    instance.seller_registered=True
         #waiting on funds status
         elif instance.status == "waiting on funds":
                 url = "https://dogechain.info/api/v1/unspent/"+instance.multi_address
