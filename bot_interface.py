@@ -24,7 +24,7 @@ use this link to try again: [+register]\
         self.escrow_start = "you have successfully started an escrow transaction \
         you will be notified when the buyer and arbitrator have agreed to the transaction"
         self.escrow_start_fail = "Unable to complete the request please make sure you have spelled \
-the user names correctly and have included /u/ before the names\n \n Use this link to try again: [+escrow]\
+the user names correctly, have three different users, and have included /u/ before the names\n \n Use this link to try again: [+escrow]\
 (http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=escrow&message=%2Bescrow%20buyer%20%2Fu%2Fusername%20Arbitrator%20%2Fu%2Fusername)" 
         self.register_ask = "%s would like to start a escrow transaction with %s.  If you would like to proceed, follow this link to register an\
  address with doge multisig escrow: \n \n"
@@ -126,6 +126,18 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
                 return True
             else:
                 return False
+        else:
+            return False
+    def duplicate_user_check(self, user1,user2,user3):
+        u1 = user1.lower().strip()
+        u2 = user2.lower().strip()
+        u3 = user3.lower().strip()
+        if u1 == u2:
+            return True
+        elif u1 == u3:
+            return True
+        elif u2 == u3:
+            return True
         else:
             return False
         
@@ -246,11 +258,14 @@ while True:
                 mess.reply(bot.escrow_start_fail)
                 mess.mark_as_read()
                 continue
-                
-            bot.New_escrow(seller,buyer,arbitrator)
+            if bot.duplicate_user_check(seller,buyer,arbitrator):
+                mess.reply(bot.escrow_start_fail)
+            else:
+                bot.New_escrow(seller,buyer,arbitrator)
             
-            mess.reply(bot.escrow_start)
+                mess.reply(bot.escrow_start)
             mess.mark_as_read()
+            
         elif "+acceptarb" in mess.body:
             split = mess.body.split("+acceptarb ")
             arbadd=escrow_session.query(escrow_address).\
