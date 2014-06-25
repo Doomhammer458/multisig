@@ -43,12 +43,13 @@ You will be notified when the payment has been received. Below is your personal 
 in the event you need to author your own transaction. Do not share this information. \n\n Your personal private key %s  Redeem script  %s " 
 
         self.funded = " A deposit of %s doge has been recieved in the following transaction: \n \n \
-Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%s](http://dogechain.info/address/%s) \n \n when the transaction is complete or has failed,\
- use the links below to send the funds to the appropriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute"
+Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%s](http://dogechain.info/address/%s) \n \n When the transaction is complete or has failed,\
+ use the links below to send the funds to the appropriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute."
         self.funded_seller_vote = "\n \n [send funds to seller](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20SELLER%20"
         self.funded_buyer_vote = "[send funds to buyer](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20BUYER%20" 
         self.complete = "Your transaction is complete, the funds were sent to %s \n\n\
  your TX ID is [%s](http://dogechain.info/tx/%s)" 
+ 
     def create_session(self):
         import sqlalchemy as sql
         from sqlalchemy.orm import sessionmaker
@@ -56,6 +57,7 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
         Session = sessionmaker(bind=engine)
         session =Session()
         return session
+        
     def add_user(self,User):
         session = self.create_session()
         dbadd= session.query(user_info).filter(user_info.user==User).first()
@@ -66,16 +68,12 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
         session.close()
         
     def Register_user(self, User,message):
-
-
-        
         split = message.split("+register ")
         split2 = split[1].split(" ")
         address = split2[0].strip()
         if self.d.validateaddress(address).isvalid == False:
             return -1
         print User, address 
-
         session = self.create_session()
         dbadd= session.query(user_info).filter(user_info.user==User).first()
         if dbadd == None:
@@ -83,21 +81,17 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
         else:
             dbadd.address = address
             dbadd.registered = True
-    
         session.add(dbadd)
         session.commit()
         session.close()
-        
         return address
+        
     def New_escrow(self,seller,buyer,arbitrator):
         from multisigcreate import generate_mutltisig_address
         session = self.create_session()
-        
         multiadd = generate_mutltisig_address()["address"]
-        print multiadd
         multi_instance = session.query(multisig).\
         filter(multisig.multiaddress==multiadd).first()
-        
         redeemscript = multi_instance.redeemscript
         adddb = escrow_address(multi_address = multiadd, seller=seller.lower(), 
         buyer = buyer.lower().strip(), arbitrator = arbitrator.lower().strip(), redeem_script = redeemscript, 
@@ -109,12 +103,14 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
         session.commit()
         session.close()
         return [multiadd,redeemscript]
+        
     def get_users(self, add):
         session = self.create_session()
         search = session.query(escrow_address).\
         filter(escrow_address.multi_address == add).first()
         session.close()
         return [ search.seller, search.buyer, search.arbitrator]
+        
     def is_registered(self,user):
         session=self.create_session()
         search = session.query(user_info).\
@@ -127,6 +123,7 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
                 return False
         else:
             return False
+            
     def duplicate_user_check(self, user1,user2,user3):
         u1 = user1.lower().strip()
         u2 = user2.lower().strip()
@@ -163,14 +160,12 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
         split2 = split[1].split(" ")
         add = split2[1]
         vote = split2[0]
-        
         role = self.find_role(u,add)
         if role == None:
             return -1
         session = self.create_session()
         search = session.query(escrow_address).\
         filter(escrow_address.multi_address == add).first()
-        
         if role == "seller":
             search.seller_vote=vote
         elif role =="buyer":
@@ -180,24 +175,20 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
         session.commit()
         session.close()
         return 1
+        
     def vote_address_picker(self, address):
         session = self.create_session()
-        
         search = session.query(escrow_address).\
         filter(escrow_address.multi_address == address).first()
         votes = [search.seller_vote,search.buyer_vote,search.arbitrator_vote]
-        
         if votes.count("BUYER")>=2:
             user = session.query(user_info).\
             filter(user_info.user == search.buyer).first()
-            print address
             session.close()
             return [user.address,user.user]
-           
         elif votes.count("SELLER")>=2:
             user = session.query(user_info).\
             filter(user_info.user == search.seller).first()
-            print address
             session.close()
             return [user.address,user.user]
         else:
@@ -228,10 +219,11 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
         return v
     
 
+#begin program
 bot = Multisig_escrow()
 bot.r.login()
-while True:
-    
+
+while True:    
     print "...."
     #inbox checker
     inbox = bot.r.get_unread()
