@@ -55,8 +55,8 @@ def redeem_funds(multi_address,to_address):
     return tx
 
 if __name__ ==  "__main__":
-    print redeem_funds("AA8sWf7H5GYFf8KDNwsHp3qD9xNA8GbDzZ","D8WVhodPoAfY7zKbYB8RvTjst5BLm6v3me")
-    pass
+    print redeem_funds("9zf4tqR2X5HejWUCEeDXMuSy2fiDSTP11h","D8WVhodPoAfY7zKbYB8RvTjst5BLm6v3me")
+    
 
 
     

@@ -39,12 +39,12 @@ http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&mess
 (you will still need to accept this request manually)"
         self.fund_info = "Your escrow transaction is ready!  Here is all the vital info, if any of it is \
 incorrect **DO NOT** proceed with the transaction. \n \n Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \
-\n\n Multi signature address: %s \n \n  If all the information is correct, send your payment to the address listed above.\
+\n\n Multi signature address: [%s](http://dogechain.info/address/%s) \n \n  If all the information is correct, send your payment to the address listed above.\
 You will be notified when the payment has been received. Below is your personal private key and the address redeem script \
 in the event you need to author your own transaction. Do not share this information. \n\n Your personal private key %s  Redeem script  %s " 
 
         self.funded = " A deposit of %s doge has been recieved in the following transaction: \n \n \
-Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s \n \n when the transaction is complete or has failed,\
+Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%s](http://dogechain.info/address/%s) \n \n when the transaction is complete or has failed,\
  use the links below to send the funds to the appropriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute"
         self.funded_seller_vote = "\n \n [send funds to seller](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20SELLER%20"
         self.funded_buyer_vote = "[send funds to buyer](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20BUYER%20" 
@@ -72,10 +72,10 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s
         
         split = message.split("+register ")
         split2 = split[1].split(" ")
-        address = split2[0]
+        address = split2[0].strip()
         if self.d.validateaddress(address).isvalid == False:
             return -1
-        print address
+        print User, address 
 
         session = self.create_session()
         dbadd= session.query(user_info).filter(user_info.user==User).first()
@@ -101,7 +101,7 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s
         
         redeemscript = multi_instance.redeemscript
         adddb = escrow_address(multi_address = multiadd, seller=seller.lower(), 
-        buyer = buyer.lower(), arbitrator = arbitrator.lower(), redeem_script = redeemscript, 
+        buyer = buyer.lower().strip(), arbitrator = arbitrator.lower().strip(), redeem_script = redeemscript, 
         seller_private_key = multi_instance.privkey1, buyer_private_key = multi_instance.privkey2,
         arbitrator_private_key = multi_instance.privkey3, status = "new", complete=False)
         session.close()
@@ -122,7 +122,10 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: %s
         filter(user_info.user == user).first()
         session.close()
         if search != None:
-            return True
+            if search.registered == True:
+                return True
+            else:
+                return False
         else:
             return False
         
@@ -234,8 +237,8 @@ while True:
 
             try:
                 split = mess.body.split("/u/")
-                buyer = split[1].split(" ")[0]
-                arbitrator = split[2]
+                buyer = split[1].split(" ")[0].strip()
+                arbitrator = split[2].strip()
                 seller = mess.author.name
                 bot.r.get_redditor(buyer)
                 bot.r.get_redditor(arbitrator)
@@ -270,7 +273,7 @@ while True:
         print instance
         #new status
         if instance.status == "new":
-            print instance
+           
             users = bot.get_users(instance.multi_address)
             if bot.is_registered(users[0])==True:
                 instance.seller_registered = True
@@ -288,23 +291,24 @@ while True:
             
 
             instance.status = "waiting on register"
-            
+         #Waiting on register    
         elif instance.status =="waiting on register":
             print instance.seller_registered, instance.buyer_registered, instance.arbitrator_accept
             if instance.seller_registered == True and instance.buyer_registered == True\
             and instance.arbitrator_accept == True:
                 users = bot.get_users(instance.multi_address)
                 bot.r.send_message(users[0],"Escrow Address",bot.fund_info %\
-                (users[0],users[1],users[2],instance.multi_address, instance.seller_private_key,\
+                (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.seller_private_key,\
                 instance.redeem_script))
                 bot.r.send_message(users[1],"Escrow Address",bot.fund_info %\
-                (users[0],users[1],users[2],instance.multi_address, instance.buyer_private_key,\
+                (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.buyer_private_key,\
                 instance.redeem_script))
                 bot.r.send_message(users[2],"Escrow Address",bot.fund_info %\
-                (users[0],users[1],users[2],instance.multi_address, instance.arbitrator_private_key,\
+                (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.arbitrator_private_key,\
                 instance.redeem_script))
                 instance.status = "waiting on funds"
- 
+            
+            #check for new sign ups
             reg = escrow_session.query(user_info).\
             filter(user_info.user == instance.buyer).first()
             if reg !=None:
@@ -316,6 +320,12 @@ while True:
             if reg !=None:
                 if reg.registered == True:
                     instance.seller_registered=True
+            reg = escrow_session.query(user_info).\
+            filter(user_info.user == instance.arbitrator).first()
+            if reg != None:
+                if reg.auto_accept_arb == True:
+                    instance.arbitrator_accept = True
+            
         #waiting on funds status
         elif instance.status == "waiting on funds":
                 url = "https://dogechain.info/api/v1/unspent/"+instance.multi_address
@@ -329,7 +339,7 @@ while True:
                         users= bot.get_users(instance.multi_address)
                         for user in users:
                             bot.r.send_message(user,"Escrow Deposit",bot.funded %\
-                (str(coins),users[0],users[1],users[2],instance.multi_address)\
+                (str(coins),users[0],users[1],users[2],instance.multi_address,instance.multi_address)\
                 +bot.funded_seller_vote + instance.multi_address+") :  "\
                 +bot.funded_buyer_vote + instance.multi_address+")")
                 
