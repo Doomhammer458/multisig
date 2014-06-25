@@ -46,7 +46,7 @@ def redeem_funds(multi_address,to_address):
         "scriptPubKey": scriptpubkey, 'redeemScript': instance.redeemscript})
         
         
-    out_dict = {to_address:value}
+    out_dict = {to_address:value-1}
     raw = doge.createrawtransaction(in_list,out_dict)
     
     sign1 = doge.signrawtransaction(raw,prev,[instance.privkey1,instance.privkey2])
