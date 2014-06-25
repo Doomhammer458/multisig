@@ -33,10 +33,9 @@ the user names correctly, have three different users, and have included /u/ befo
         self.arbitrator_ask1 = '%s has asked you to arbitrate a transaction with %s, to accept click on the following link: \n \n '
         self.arbitrator_ask2="[+acceptarb]\
 (http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=escrow&message=\%2Bacceptarb\%20"
-        self.arbitrator_auto_accept_link = "\n\n if you would like to automatically accept future \
+        self.arbitrator_auto_accept_link = "\n\n if you would like to accept this requests and automatically accept future \
 arbitrator requests please follow the following link: \n \n [+autoarb](\
-http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&message=%2Bautoarb)  \
-(you will still need to accept this request manually)"
+http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&message=%2Bautoarb) "
         self.fund_info = "Your escrow transaction is ready!  Here is all the vital info, if any of it is \
 incorrect **DO NOT** proceed with the transaction. \n \n Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \
 \n\n Multi signature address: [%s](http://dogechain.info/address/%s) \n \n  If all the information is correct, send your payment to the address listed above.\
