@@ -2,9 +2,6 @@
 
 
 
-
-
-
 def redeem_funds(multi_address,to_address):
     import requests
     from multisigtables import multisig

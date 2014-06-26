@@ -10,46 +10,11 @@ class Multisig_escrow():
     def __init__(self):
         import dogecoinrpc
         import praw
+        from messages_module import Messages_module 
         self.d = dogecoinrpc.connect_to_local()
         self.r = praw.Reddit(user_agent="doge_multisig v0.2 by /u/Doomhammer458")
-        
-        #message templates
-        self.Register_message = "You are now registered with the address: %s and can \
-start using doge mulitsig escrow! \n \n For info on getting started please visit /r/DogeMultisigEscrow"
+        self.m = Messages_module()
 
-        self.Register_error = " Please provide a valid doge address \n\n \
-use this link to try again: [+register]\
-(http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=register&message=%2Bregister%20ADDRESS)"
-
-        self.escrow_start = "you have successfully started an escrow transaction \
-        you will be notified when the buyer and arbitrator have agreed to the transaction"
-        self.escrow_start_fail = "Unable to complete the request please make sure you have spelled \
-the user names correctly, have three different users, and have included /u/ before the names\n \n Use this link to try again: [+escrow]\
-(http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=escrow&message=%2Bescrow%20buyer%20%2Fu%2Fusername%20Arbitrator%20%2Fu%2Fusername)" 
-        self.register_ask = "%s would like to start a escrow transaction with %s.  If you would like to proceed, follow this link to register an\
- address with doge multisig escrow: \n \n"
-        self.register_url="[+register]\
-(http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=register&message=%2Bregister%20ADDRESS)"
-        self.arbitrator_ask1 = '%s has asked you to arbitrate a transaction with %s, to accept click on the following link: \n \n '
-        self.arbitrator_ask2="[+acceptarb]\
-(http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=escrow&message=\%2Bacceptarb\%20"
-        self.arbitrator_auto_accept_link = "\n\n if you would like to accept this requests and automatically accept future \
-arbitrator requests please follow the following link: \n \n [+autoarb](\
-http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&message=%2Bautoarb) "
-        self.fund_info = "Your escrow transaction is ready!  Here is all the vital info, if any of it is \
-incorrect **DO NOT** proceed with the transaction. \n \n Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \
-\n\n Multi signature address: [%s](http://dogechain.info/address/%s) \n \n  If all the information is correct, send your payment to the address listed above.\
-You will be notified when the payment has been received. Below is your personal private key and the address redeem script \
-in the event you need to author your own transaction. Do not share this information. \n\n Your personal private key %s  Redeem script  %s " 
-
-        self.funded = " A deposit of %s doge has been recieved in the following transaction: \n \n \
-Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%s](http://dogechain.info/address/%s) \n \n When the transaction is complete or has failed,\
- use the links below to send the funds to the appropriate party.  If you are the arbitrator do not use the links until you have talked to both parties in an attempt to resolve a dispute."
-        self.funded_seller_vote = "\n \n [send funds to seller](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20SELLER%20"
-        self.funded_buyer_vote = "[send funds to buyer](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20BUYER%20" 
-        self.complete = "Your transaction is complete, the funds were sent to %s \n\n\
- your TX ID is [%s](http://dogechain.info/tx/%s)" 
- 
     def create_session(self):
         import sqlalchemy as sql
         from sqlalchemy.orm import sessionmaker
@@ -232,9 +197,9 @@ while True:
         if "+register" in mess.body :
             add = bot.Register_user(mess.author.name,  mess.body)
             if add == -1:
-                mess.reply(bot.Register_error)
+                mess.reply(bot.m.Register_error)
             else:
-                mess.reply(bot.Register_message % (add))
+                mess.reply(bot.m.Register_message % (add))
             mess.mark_as_read()
         elif "+escrow" in mess.body:
 
@@ -246,32 +211,41 @@ while True:
                 bot.r.get_redditor(buyer)
                 bot.r.get_redditor(arbitrator)
             except:
-                mess.reply(bot.escrow_start_fail)
+                mess.reply(bot.m.escrow_start_fail)
                 mess.mark_as_read()
                 continue
             if bot.duplicate_user_check(seller,buyer,arbitrator):
-                mess.reply(bot.escrow_start_fail)
+                mess.reply(bot.m.escrow_start_fail)
             else:
                 bot.New_escrow(seller,buyer,arbitrator)
             
-                mess.reply(bot.escrow_start)
+                mess.reply(bot.m.escrow_start)
             mess.mark_as_read()
             
         elif "+acceptarb" in mess.body:
-            split = mess.body.split("+acceptarb ")
-            arbadd=escrow_session.query(escrow_address).\
-            filter(escrow_address.multi_address == split[1]).first()
-            arbadd.arbitrator_accept = True
-            escrow_session.add(arbadd)
+            try:
+                split = mess.body.split("+acceptarb ")
+                arbadd=escrow_session.query(escrow_address).\
+                filter(escrow_address.multi_address == split[1]).first()
+                arbadd.arbitrator_accept = True
+                escrow_session.add(arbadd)
+            except:
+                mess.reply(bot.m.message_fail)
             mess.mark_as_read()
         elif "+autoarb" in mess.body:
-            autoarb_add = escrow_session.query(user_info).\
-            filter(user_info.user==mess.author.name.lower()).first()
-            autoarb_add.auto_accept_arb = True
-            escrow_session.add(autoarb_add)
+            try:
+                autoarb_add = escrow_session.query(user_info).\
+                filter(user_info.user==mess.author.name.lower()).first()
+                autoarb_add.auto_accept_arb = True
+                escrow_session.add(autoarb_add)
+            except:
+                mess.reply(bot.m.message_fail)
             mess.mark_as_read()
         elif "+vote" in mess.body:
-            bot.vote_parser(mess.author.name,mess.body)
+            try:
+                bot.vote_parser(mess.author.name,mess.body)
+            except:
+                mess.reply(bot.m.message_fail)
             mess.mark_as_read()
 
     #database checker
@@ -284,16 +258,16 @@ while True:
             if bot.is_registered(users[0])==True:
                 instance.seller_registered = True
             else:
-                bot.r.send_message(users[0],"new escrow" ,bot.register_ask % (users[0],users[1])+bot.register_url)
+                bot.r.send_message(users[0],"new escrow" ,bot.m.register_ask % (users[0],users[1])+bot.m.register_url)
             if bot.is_registered(users[1])==True:
                 instance.buyer_registered = True
             else:
-                bot.r.send_message(users[1],"new escrow" ,bot.register_ask % (users[0],users[1])+bot.register_url)
+                bot.r.send_message(users[1],"new escrow" ,bot.m.register_ask % (users[0],users[1])+bot.m.register_url)
             if bot.auto_accept(users[2]) == True:
                 instance.arbitrator_accept = True
             else:
-                bot.r.send_message(users[2],"new escrow" ,bot.arbitrator_ask1 % (users[0],users[1])+bot.arbitrator_ask2+\
-                instance.multi_address+")"+bot.arbitrator_auto_accept_link)
+                bot.r.send_message(users[2],"new escrow" ,bot.m.arbitrator_ask1 % (users[0],users[1])+bot.m.arbitrator_ask2+\
+                instance.multi_address+")"+bot.m.arbitrator_auto_accept_link)
             
 
             instance.status = "waiting on register"
@@ -303,13 +277,13 @@ while True:
             if instance.seller_registered == True and instance.buyer_registered == True\
             and instance.arbitrator_accept == True:
                 users = bot.get_users(instance.multi_address)
-                bot.r.send_message(users[0],"Escrow Address",bot.fund_info %\
+                bot.r.send_message(users[0],"Escrow Address",bot.m.fund_info %\
                 (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.seller_private_key,\
                 instance.redeem_script))
-                bot.r.send_message(users[1],"Escrow Address",bot.fund_info %\
+                bot.r.send_message(users[1],"Escrow Address",bot.m.fund_info %\
                 (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.buyer_private_key,\
                 instance.redeem_script))
-                bot.r.send_message(users[2],"Escrow Address",bot.fund_info %\
+                bot.r.send_message(users[2],"Escrow Address",bot.m.fund_info %\
                 (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.arbitrator_private_key,\
                 instance.redeem_script))
                 instance.status = "waiting on funds"
@@ -344,10 +318,10 @@ while True:
                     else:
                         users= bot.get_users(instance.multi_address)
                         for user in users:
-                            bot.r.send_message(user,"Escrow Deposit",bot.funded %\
+                            bot.r.send_message(user,"Escrow Deposit",bot.m.funded %\
                 (str(coins),users[0],users[1],users[2],instance.multi_address,instance.multi_address)\
-                +bot.funded_seller_vote + instance.multi_address+") :  "\
-                +bot.funded_buyer_vote + instance.multi_address+")")
+                +bot.m.funded_seller_vote + instance.multi_address+") :  "\
+                +bot.m.funded_buyer_vote + instance.multi_address+")")
                 
                         instance.status = "funded"
                     
@@ -362,7 +336,7 @@ while True:
 
                 seller,buyer = bot.get_users(instance.multi_address)[0],bot.get_users(instance.multi_address)[1]
                 for rec in [seller,buyer]:
-                    bot.r.send_message(rec,"escrow complete",bot.complete % (to_user[1],instance.tx_id,instance.tx_id))                
+                    bot.r.send_message(rec,"escrow complete",bot.m.complete % (to_user[1],instance.tx_id,instance.tx_id))                
                 instance.status = "complete"
                 instance.complete = True
         
