@@ -243,7 +243,9 @@ while True:
             mess.mark_as_read()
         elif "+vote" in mess.body:
             try:
-                bot.vote_parser(mess.author.name,mess.body)
+                vote_result = bot.vote_parser(mess.author.name,mess.body)
+                if vote_result == -1:
+                    mess.reply(bot.m.message_fail)
             except:
                 mess.reply(bot.m.message_fail)
             mess.mark_as_read()
