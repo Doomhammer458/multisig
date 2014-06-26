@@ -2,19 +2,34 @@
 
 import time 
 import requests
+import datetime
+import calendar
 from multisigtables import multisig,escrow_address,user_info
 from multisigredeem import redeem_funds
 class Multisig_escrow():
     
 
     def __init__(self):
+
+        
         import dogecoinrpc
         import praw
         from messages_module import Messages_module 
         self.d = dogecoinrpc.connect_to_local()
         self.r = praw.Reddit(user_agent="doge_multisig v0.2 by /u/Doomhammer458")
         self.m = Messages_module()
+    def Timestamp(self,_datetime): 
+        
+        return calendar.timegm(_datetime.timetuple())
 
+    def toTStamp(self,DATETIME):
+        stamp = self.Timestamp(DATETIME)
+        stamp = str(stamp)
+        return stamp
+    def fromTStamp(self,stamp):
+        date = datetime.datetime.utcfromtimestamp(float(stamp))
+        return date
+    
     def create_session(self):
         import sqlalchemy as sql
         from sqlalchemy.orm import sessionmaker
@@ -61,7 +76,8 @@ class Multisig_escrow():
         adddb = escrow_address(multi_address = multiadd, seller=seller.lower(), 
         buyer = buyer.lower().strip(), arbitrator = arbitrator.lower().strip(), redeem_script = redeemscript, 
         seller_private_key = multi_instance.privkey1, buyer_private_key = multi_instance.privkey2,
-        arbitrator_private_key = multi_instance.privkey3, status = "new", complete=False)
+        arbitrator_private_key = multi_instance.privkey3, status = "new", \
+        date_created = self.toTStamp(datetime.datetime.utcnow()) ,complete=False)
         session.close()
         session = self.create_session()
         session.add(adddb)
