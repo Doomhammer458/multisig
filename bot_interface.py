@@ -5,7 +5,7 @@ import requests
 import datetime
 import calendar
 from multisigtables import multisig,escrow_address,user_info
-from multisigredeem import redeem_funds
+from multisigredeem import redeem_funds, send_from_unspent
 class Multisig_escrow():
     
 
@@ -70,7 +70,7 @@ class Multisig_escrow():
         from multisigcreate import generate_mutltisig_address
         session = self.create_session()
         multiadd = generate_mutltisig_address()["address"]
-        self.d.sendtoaddress(multiadd,1)
+        send_from_unspent(multiadd,1)
         multi_instance = session.query(multisig).\
         filter(multisig.multiaddress==multiadd).first()
         redeemscript = multi_instance.redeemscript

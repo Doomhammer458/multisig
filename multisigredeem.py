@@ -1,4 +1,16 @@
-
+def send_from_unspent(to_address,amount,fee=0):
+    import dogecoinrpc
+    doge = dogecoinrpc.connect_to_local()
+    unspent = doge.listunspent()[0]
+    in_list = [{"txid":unspent.txid,"vout":unspent.vout}]
+    out_dict= {to_address: float(amount)-fee,\
+    "DLTyy9SFcsZZ5HEciKp7vU96EiyXe9UvAP":float(unspent.amount)-float(amount)-fee}
+    raw = doge.createrawtransaction(in_list,out_dict)
+    sign = doge.signrawtransaction(raw)
+    tx_id = doge.sendrawtransaction(sign["hex"])
+    return tx_id
+    
+    
 
 
 
@@ -52,8 +64,9 @@ def redeem_funds(multi_address,to_address):
     return tx
 
 if __name__ ==  "__main__":
-    print redeem_funds("9zf4tqR2X5HejWUCEeDXMuSy2fiDSTP11h","D8WVhodPoAfY7zKbYB8RvTjst5BLm6v3me")
     
+    #print redeem_funds("9zf4tqR2X5HejWUCEeDXMuSy2fiDSTP11h","D8WVhodPoAfY7zKbYB8RvTjst5BLm6v3me")
+    #x = send_from_unspent("DKgZANqo6pTLGPLzWT6tqGKebV94XGmBfk",1)
 
 
     
