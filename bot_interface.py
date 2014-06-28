@@ -332,7 +332,7 @@ while True:
                 unspent = resp["unspent_outputs"]
                 if unspent != []:
                     coins = bot.get_value(unspent)
-                    if coins == 0:
+                    if coins <2:
                         pass
                     else:
                         users= bot.get_users(instance.multi_address)
