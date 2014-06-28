@@ -337,7 +337,7 @@ while True:
                         users= bot.get_users(instance.multi_address)
                         for user in users:
                             bot.r.send_message(user,"Escrow Deposit",bot.m.funded %\
-                (str(coins),users[0],users[1],users[2],instance.multi_address,instance.multi_address)\
+                (str(coins-1),users[0],users[1],users[2],instance.multi_address,instance.multi_address)\
                 +bot.m.funded_seller_vote + instance.multi_address+") :  "\
                 +bot.m.funded_buyer_vote + instance.multi_address+")")
                 
@@ -345,6 +345,7 @@ while True:
                     
         #funded status
         elif instance.status == "funded":
+            print instance.seller_vote, instance.buyer_vote, instance.arbitrator_vote 
             to_user = bot.vote_address_picker(instance.multi_address)
             if to_user == None:
                 pass
