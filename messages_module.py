@@ -25,8 +25,7 @@ http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=autoarb&mess
         self.fund_info = "Your escrow transaction is ready!  Here is all the vital info, if any of it is \
 incorrect **DO NOT** proceed with the transaction. \n \n Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \
 \n\n Multi signature address: [%s](http://dogechain.info/address/%s) \n \n  If all the information is correct, send your payment to the address listed above.\
- One doge will be subtracted from the amount sent to pay the transaction fee of the outgoing transaction. \
-You will be notified when the payment has been received.\n\n Below is your personal private key and the address redeem script \
+ You will be notified when the payment has been received.\n\n Below is your personal private key and the address redeem script \
 in the event you need to author your own transaction. Do not share this information. \n\n Your personal private key %s  Redeem script  %s " 
         self.message_fail = "unable to proccess your request.  Please resend the message without modifying the content of the message body"
         self.funded = " A deposit of %s doge has been recieved in the following transaction: \n \n \
