@@ -369,5 +369,5 @@ while True:
     escrow_session.commit()
     escrow_session.close()
     time.sleep(1)
-    time.sleep(10)
+    time.sleep(5)
         
