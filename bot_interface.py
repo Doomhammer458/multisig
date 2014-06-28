@@ -70,6 +70,7 @@ class Multisig_escrow():
         from multisigcreate import generate_mutltisig_address
         session = self.create_session()
         multiadd = generate_mutltisig_address()["address"]
+        self.d.sendtoaddress(multiadd,1)
         multi_instance = session.query(multisig).\
         filter(multisig.multiaddress==multiadd).first()
         redeemscript = multi_instance.redeemscript
