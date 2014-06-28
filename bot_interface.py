@@ -74,7 +74,7 @@ class Multisig_escrow():
         multi_instance = session.query(multisig).\
         filter(multisig.multiaddress==multiadd).first()
         redeemscript = multi_instance.redeemscript
-        adddb = escrow_address(multi_address = multiadd, seller=seller.lower(), 
+        adddb = escrow_address(multi_address = multiadd, seller=seller.lower(),
         buyer = buyer.lower().strip(), arbitrator = arbitrator.lower().strip(), redeem_script = redeemscript, 
         seller_private_key = multi_instance.privkey1, buyer_private_key = multi_instance.privkey2,
         arbitrator_private_key = multi_instance.privkey3, status = "new", \
