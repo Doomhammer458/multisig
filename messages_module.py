@@ -35,4 +35,5 @@ Seller: %s \n\n Buyer: %s  \n\n Arbitrator:  %s \n\n Multi signature address: [%
         self.funded_buyer_vote = "[send funds to buyer](http://www.reddit.com/message/compose?to=dogemultisigescrow&subject=vote&message=%2Bvote%20BUYER%20" 
         self.complete = "Your transaction is complete, the funds were sent to %s \n\n\
  your TX ID is [%s](http://dogechain.info/tx/%s)" 
-        self.timeout_reg = "Your request has timed out.  Either the buyer did not register with Doge Multisig Escrow or the arbitrator did not agree to arbitrate the transaction"
+        self.timeout_reg = "Your request has timed out.  Either the buyer did not register with Doge Multisig Escrow or the arbitrator did not agree to arbitrate the transaction\n\n \
+ Contact the buyer and arbitrator and try again."

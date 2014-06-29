@@ -325,14 +325,14 @@ while True:
                 if reg.auto_accept_arb == True:
                     instance.arbitrator_accept = True
             #timeout
-            print datetime.datetime.utcnow() -bot.fromTStamp(instance.date_created)
-            """
-            if datetime.datetime.utcnow() -bot.fromTStamp(instance.date_created) > datetime.timedelta(days=2):
+            
+            
+            if datetime.datetime.utcnow() -bot.fromTStamp(instance.date_created) > datetime.timedelta(days=1):
                 instance.status = "timeout reg"
                 instance.complete = True
                 bot.r.send_message(instance.seller,"Escrow timed out" ,bot.m.timeout_reg)
                 
-            """
+            
         #waiting on funds status
         elif instance.status == "waiting on funds":
                 url = "https://dogechain.info/api/v1/unspent/"+instance.multi_address
