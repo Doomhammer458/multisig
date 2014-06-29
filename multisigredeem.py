@@ -1,7 +1,10 @@
 def send_from_unspent(to_address,amount,fee=0):
     import dogecoinrpc
     doge = dogecoinrpc.connect_to_local()
-    unspent = doge.listunspent()[0]
+    for x in doge.listunspent():
+        if float(x.amount) > float(amount)+fee :
+            unspent = x
+            break
     in_list = [{"txid":unspent.txid,"vout":unspent.vout}]
     out_dict= {to_address: float(amount)-fee,\
     "DLTyy9SFcsZZ5HEciKp7vU96EiyXe9UvAP":float(unspent.amount)-float(amount)-fee}
