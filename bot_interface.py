@@ -16,7 +16,7 @@ class Multisig_escrow():
         import praw
         from messages_module import Messages_module 
         self.d = dogecoinrpc.connect_to_local()
-        self.r = praw.Reddit(user_agent="doge_multisig v0.2 by /u/Doomhammer458")
+        self.r = praw.Reddit(user_agent="doge_multisig v0.3 by /u/Doomhammer458")
         self.m = Messages_module()
     def Timestamp(self,_datetime): 
         
