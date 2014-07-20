@@ -202,180 +202,185 @@ class Multisig_escrow():
     
 
 #begin program
-bot = Multisig_escrow()
-bot.r.login()
-
-while True:    
-    print "...."
-    #inbox checker
-    inbox = bot.r.get_unread()
-    escrow_session = bot.create_session()
-    for mess in inbox:
-        if "+register" in mess.body :
-            add = bot.Register_user(mess.author.name,  mess.body)
-            if add == -1:
-                mess.reply(bot.m.Register_error)
-            else:
-                mess.reply(bot.m.Register_message % (add))
-            mess.mark_as_read()
-        elif "+escrow" in mess.body:
-
-            try:
-                split = mess.body.split("/u/")
-                buyer = split[1].split(" ")[0].strip()
-                arbitrator = split[2].strip()
-                seller = mess.author.name
-                bot.r.get_redditor(buyer)
-                bot.r.get_redditor(arbitrator)
-            except:
-                mess.reply(bot.m.escrow_start_fail)
+while True:
+    bot = Multisig_escrow()
+    bot.r.login()
+    counter = 0
+    while True:    
+        print "...."
+        #inbox checker
+        inbox = bot.r.get_unread()
+        escrow_session = bot.create_session()
+        for mess in inbox:
+            if "+register" in mess.body :
+                add = bot.Register_user(mess.author.name,  mess.body)
+                if add == -1:
+                    mess.reply(bot.m.Register_error)
+                else:
+                    mess.reply(bot.m.Register_message % (add))
                 mess.mark_as_read()
-                continue
-            if bot.duplicate_user_check(seller,buyer,arbitrator):
-                mess.reply(bot.m.escrow_start_fail)
-            else:
-                bot.New_escrow(seller,buyer,arbitrator)
-            
-                mess.reply(bot.m.escrow_start)
-            mess.mark_as_read()
-            
-        elif "+acceptarb" in mess.body:
-            try:
-                split = mess.body.split("+acceptarb ")
-                arbadd=escrow_session.query(escrow_address).\
-                filter(escrow_address.multi_address == split[1]).first()
-                arbadd.arbitrator_accept = True
-                escrow_session.add(arbadd)
-            except:
-                mess.reply(bot.m.message_fail)
-            mess.mark_as_read()
-        elif "+autoarb" in mess.body:
-            try:
-                autoarb_add = escrow_session.query(user_info).\
-                filter(user_info.user==mess.author.name.lower()).first()
-                autoarb_add.auto_accept_arb = True
-                escrow_session.add(autoarb_add)
-            except:
-                mess.reply(bot.m.message_fail)
-            mess.mark_as_read()
-        elif "+vote" in mess.body:
-            try:
-                vote_result = bot.vote_parser(mess.author.name,mess.body)
-                if vote_result == -1:
-                    mess.reply(bot.m.message_fail)
-            except:
-                mess.reply(bot.m.message_fail)
-            mess.mark_as_read()
-
-    #database checker
-    for instance in escrow_session.query(escrow_address).filter(escrow_address.complete == False).all():
-        print instance
-        #new status
-        if instance.status == "new":
-           
-            users = bot.get_users(instance.multi_address)
-            if bot.is_registered(users[0])==True:
-                instance.seller_registered = True
-            else:
-                bot.r.send_message(users[0],"new escrow" ,bot.m.register_ask % (users[0],users[1])+bot.m.register_url)
-            if bot.is_registered(users[1])==True:
-                instance.buyer_registered = True
-            else:
-                bot.r.send_message(users[1],"new escrow" ,bot.m.register_ask % (users[0],users[1])+bot.m.register_url)
-            if bot.auto_accept(users[2]) == True:
-                instance.arbitrator_accept = True
-            else:
-                bot.r.send_message(users[2],"new escrow" ,bot.m.arbitrator_ask1 % (users[0],users[1])+bot.m.arbitrator_ask2+\
-                instance.multi_address+")"+bot.m.arbitrator_auto_accept_link)
-            
-
-            instance.status = "waiting on register"
-         #Waiting on register    
-        elif instance.status =="waiting on register":
-            print instance.seller_registered, instance.buyer_registered, instance.arbitrator_accept
-            if instance.seller_registered == True and instance.buyer_registered == True\
-            and instance.arbitrator_accept == True:
-                users = bot.get_users(instance.multi_address)
-                bot.r.send_message(users[0],"Escrow Address",bot.m.fund_info %\
-                (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.seller_private_key,\
-                instance.redeem_script))
-                bot.r.send_message(users[1],"Escrow Address",bot.m.fund_info %\
-                (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.buyer_private_key,\
-                instance.redeem_script))
-                bot.r.send_message(users[2],"Escrow Address",bot.m.fund_info %\
-                (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.arbitrator_private_key,\
-                instance.redeem_script))
-                instance.status = "waiting on funds"
-            
-            #check for new sign ups
-            reg = escrow_session.query(user_info).\
-            filter(user_info.user == instance.buyer).first()
-            if reg !=None:
-                if reg.registered == True:
-                    instance.buyer_registered=True
-                
-            reg = escrow_session.query(user_info).\
-            filter(user_info.user == instance.seller).first()
-            if reg !=None:
-                if reg.registered == True:
-                    instance.seller_registered=True
-            reg = escrow_session.query(user_info).\
-            filter(user_info.user == instance.arbitrator).first()
-            if reg != None:
-                if reg.auto_accept_arb == True:
-                    instance.arbitrator_accept = True
-            #timeout
-            
-            
-            if datetime.datetime.utcnow() -bot.fromTStamp(instance.date_created) > datetime.timedelta(days=1):
-                instance.status = "timeout reg"
-                instance.complete = True
-                bot.r.send_message(instance.seller,"Escrow timed out" ,bot.m.timeout_reg)
-                
-            
-        #waiting on funds status
-        elif instance.status == "waiting on funds":
-                url = "https://dogechain.info/api/v1/unspent/"+instance.multi_address
-                resp = requests.get(url).json()
-                unspent = resp["unspent_outputs"]
-                if unspent != []:
-                    coins = bot.get_value(unspent)
-                    if coins <2:
-                        pass
-                    else:
-                        users= bot.get_users(instance.multi_address)
-                        for user in users:
-                            bot.r.send_message(user,"Escrow Deposit",bot.m.funded %\
-                (str(coins-1),users[0],users[1],users[2],instance.multi_address,instance.multi_address)\
-                +bot.m.funded_seller_vote + instance.multi_address+") :  "\
-                +bot.m.funded_buyer_vote + instance.multi_address+")")
-                
-                        instance.status = "funded"
-                    
-        #funded status
-        elif instance.status == "funded":
-            print instance.seller_vote, instance.buyer_vote, instance.arbitrator_vote 
-            to_user = bot.vote_address_picker(instance.multi_address)
-            if to_user == None:
-                pass
-            else:
-                
-                instance.tx_id = redeem_funds(instance.multi_address,to_user[0])
-
-                seller,buyer = bot.get_users(instance.multi_address)[0],bot.get_users(instance.multi_address)[1]
-                for rec in [seller,buyer]:
-                    bot.r.send_message(rec,"escrow complete",bot.m.complete % (to_user[1],instance.tx_id,instance.tx_id))                
-                instance.status = "complete"
-                instance.complete = True
-        
-        
-        
-        escrow_session.add(instance)
-        
-            
+            elif "+escrow" in mess.body:
     
-    escrow_session.commit()
-    escrow_session.close()
-    time.sleep(1)
-    time.sleep(5)
+                try:
+                    split = mess.body.split("/u/")
+                    buyer = split[1].split(" ")[0].strip()
+                    arbitrator = split[2].strip()
+                    seller = mess.author.name
+                    bot.r.get_redditor(buyer)
+                    bot.r.get_redditor(arbitrator)
+                except:
+                    mess.reply(bot.m.escrow_start_fail)
+                    mess.mark_as_read()
+                    continue
+                if bot.duplicate_user_check(seller,buyer,arbitrator):
+                    mess.reply(bot.m.escrow_start_fail)
+                else:
+                    bot.New_escrow(seller,buyer,arbitrator)
+                
+                    mess.reply(bot.m.escrow_start)
+                mess.mark_as_read()
+                
+            elif "+acceptarb" in mess.body:
+                try:
+                    split = mess.body.split("+acceptarb ")
+                    arbadd=escrow_session.query(escrow_address).\
+                    filter(escrow_address.multi_address == split[1]).first()
+                    arbadd.arbitrator_accept = True
+                    escrow_session.add(arbadd)
+                except:
+                    mess.reply(bot.m.message_fail)
+                mess.mark_as_read()
+            elif "+autoarb" in mess.body:
+                try:
+                    autoarb_add = escrow_session.query(user_info).\
+                    filter(user_info.user==mess.author.name.lower()).first()
+                    autoarb_add.auto_accept_arb = True
+                    escrow_session.add(autoarb_add)
+                except:
+                    mess.reply(bot.m.message_fail)
+                mess.mark_as_read()
+            elif "+vote" in mess.body:
+                try:
+                    vote_result = bot.vote_parser(mess.author.name,mess.body)
+                    if vote_result == -1:
+                        mess.reply(bot.m.message_fail)
+                except:
+                    mess.reply(bot.m.message_fail)
+                mess.mark_as_read()
+    
+        #database checker
+        for instance in escrow_session.query(escrow_address).filter(escrow_address.complete == False).all():
+            print instance
+            #new status
+            if instance.status == "new":
+            
+                users = bot.get_users(instance.multi_address)
+                if bot.is_registered(users[0])==True:
+                    instance.seller_registered = True
+                else:
+                    bot.r.send_message(users[0],"new escrow" ,bot.m.register_ask % (users[0],users[1])+bot.m.register_url)
+                if bot.is_registered(users[1])==True:
+                    instance.buyer_registered = True
+                else:
+                    bot.r.send_message(users[1],"new escrow" ,bot.m.register_ask % (users[0],users[1])+bot.m.register_url)
+                if bot.auto_accept(users[2]) == True:
+                    instance.arbitrator_accept = True
+                else:
+                    bot.r.send_message(users[2],"new escrow" ,bot.m.arbitrator_ask1 % (users[0],users[1])+bot.m.arbitrator_ask2+\
+                    instance.multi_address+")"+bot.m.arbitrator_auto_accept_link)
+                
+    
+                instance.status = "waiting on register"
+            #Waiting on register    
+            elif instance.status =="waiting on register":
+                print instance.seller_registered, instance.buyer_registered, instance.arbitrator_accept
+                if instance.seller_registered == True and instance.buyer_registered == True\
+                and instance.arbitrator_accept == True:
+                    users = bot.get_users(instance.multi_address)
+                    bot.r.send_message(users[0],"Escrow Address",bot.m.fund_info %\
+                    (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.seller_private_key,\
+                    instance.redeem_script))
+                    bot.r.send_message(users[1],"Escrow Address",bot.m.fund_info %\
+                    (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.buyer_private_key,\
+                    instance.redeem_script))
+                    bot.r.send_message(users[2],"Escrow Address",bot.m.fund_info %\
+                    (users[0],users[1],users[2],instance.multi_address,instance.multi_address, instance.arbitrator_private_key,\
+                    instance.redeem_script))
+                    instance.status = "waiting on funds"
+                
+                #check for new sign ups
+                reg = escrow_session.query(user_info).\
+                filter(user_info.user == instance.buyer).first()
+                if reg !=None:
+                    if reg.registered == True:
+                        instance.buyer_registered=True
+                    
+                reg = escrow_session.query(user_info).\
+                filter(user_info.user == instance.seller).first()
+                if reg !=None:
+                    if reg.registered == True:
+                        instance.seller_registered=True
+                reg = escrow_session.query(user_info).\
+                filter(user_info.user == instance.arbitrator).first()
+                if reg != None:
+                    if reg.auto_accept_arb == True:
+                        instance.arbitrator_accept = True
+                #timeout
+                
+                
+                if datetime.datetime.utcnow() -bot.fromTStamp(instance.date_created) > datetime.timedelta(days=1):
+                    instance.status = "timeout reg"
+                    instance.complete = True
+                    bot.r.send_message(instance.seller,"Escrow timed out" ,bot.m.timeout_reg)
+                    
+                
+            #waiting on funds status
+            elif instance.status == "waiting on funds":
+                    url = "https://dogechain.info/api/v1/unspent/"+instance.multi_address
+                    resp = requests.get(url).json()
+                    unspent = resp["unspent_outputs"]
+                    if unspent != []:
+                        coins = bot.get_value(unspent)
+                        if coins <2:
+                            pass
+                        else:
+                            users= bot.get_users(instance.multi_address)
+                            for user in users:
+                                bot.r.send_message(user,"Escrow Deposit",bot.m.funded %\
+                    (str(coins-1),users[0],users[1],users[2],instance.multi_address,instance.multi_address)\
+                    +bot.m.funded_seller_vote + instance.multi_address+") :  "\
+                    +bot.m.funded_buyer_vote + instance.multi_address+")")
+                    
+                            instance.status = "funded"
+                        
+            #funded status
+            elif instance.status == "funded":
+                print instance.seller_vote, instance.buyer_vote, instance.arbitrator_vote 
+                to_user = bot.vote_address_picker(instance.multi_address)
+                if to_user == None:
+                    pass
+                else:
+                    
+                    instance.tx_id = redeem_funds(instance.multi_address,to_user[0])
+    
+                    seller,buyer = bot.get_users(instance.multi_address)[0],bot.get_users(instance.multi_address)[1]
+                    for rec in [seller,buyer]:
+                        bot.r.send_message(rec,"escrow complete",bot.m.complete % (to_user[1],instance.tx_id,instance.tx_id))                
+                    instance.status = "complete"
+                    instance.complete = True
+            
+            
+            
+            escrow_session.add(instance)
+            
+                
+        
+        escrow_session.commit()
+        escrow_session.close()
+        time.sleep(1)
+        time.sleep(5)
+        counter+=1
+        if counter > 10000:
+            break
+bot=None
         
