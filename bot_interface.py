@@ -195,7 +195,7 @@ class Multisig_escrow():
     def get_value(self,unspent):
         v=0.0
         for i in unspent:
-            if int(i["confirmations"])<3:
+            if int(i["confirmations"])<1:
                 return 0
             v+=float(i["value"])*10**-8
         return v
