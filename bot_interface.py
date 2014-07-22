@@ -23,14 +23,22 @@ class Multisig_escrow():
         return calendar.timegm(_datetime.timetuple())
 
     def toTStamp(self,DATETIME):
+        """
+        converts a datetime object into a date string
+        """
         stamp = self.Timestamp(DATETIME)
         stamp = str(stamp)
         return stamp
     def fromTStamp(self,stamp):
+        """ Converts a date string into a datetime object"""
+        
         date = datetime.datetime.utcfromtimestamp(float(stamp))
         return date
     
     def create_session(self):
+        """
+        Creates and returns a sqlite session
+        """
         import sqlalchemy as sql
         from sqlalchemy.orm import sessionmaker
         engine = sql.create_engine("sqlite:///multisig.db")
@@ -39,6 +47,10 @@ class Multisig_escrow():
         return session
         
     def add_user(self,User):
+        """
+        Adds a new user to the database without a registration address.     
+        Used for people added without using + register  
+        """
         session = self.create_session()
         dbadd= session.query(user_info).filter(user_info.user==User).first()
         if dbadd == None:
@@ -48,6 +60,9 @@ class Multisig_escrow():
         session.close()
         
     def Register_user(self, User,message):
+        """
+        Given a reddit message associates an address to a user in the data base
+        """
         split = message.split("+register ")
         split2 = split[1].split(" ")
         address = split2[0].strip()
@@ -67,6 +82,9 @@ class Multisig_escrow():
         return address
         
     def New_escrow(self,seller,buyer,arbitrator):
+        """ 
+        Starts a new escrow transaction between the given parties
+        """
         from multisigcreate import generate_mutltisig_address
         session = self.create_session()
         multiadd = generate_mutltisig_address()["address"]
@@ -87,6 +105,10 @@ class Multisig_escrow():
         return [multiadd,redeemscript]
         
     def get_users(self, add):
+        """
+        given a multisig address returns the 3 users associated with it as a list
+        [ search.seller, search.buyer, search.arbitrator]
+        """
         session = self.create_session()
         search = session.query(escrow_address).\
         filter(escrow_address.multi_address == add).first()
@@ -94,6 +116,9 @@ class Multisig_escrow():
         return [ search.seller, search.buyer, search.arbitrator]
         
     def is_registered(self,user):
+        """
+        Determines if given user is registered.
+        """
         session=self.create_session()
         search = session.query(user_info).\
         filter(user_info.user == user).first()
